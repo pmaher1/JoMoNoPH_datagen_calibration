@@ -375,15 +375,15 @@ ggplot(grid, aes(t)) +
 grid_overlay <- grid %>%
   mutate(
     `Bernstein H0` = H0,
-    `Log-logistic` = H0_loglogis(t, shape_hat, scale_hat),
-    `Weibull, raw SSE` = H0_weibull(t, shape_weib_plain_hat, scale_weib_plain_hat),
+    `Log-logistic, SSE` = H0_loglogis(t, shape_hat, scale_hat),
+    `Weibull, SSE` = H0_weibull(t, shape_weib_plain_hat, scale_weib_plain_hat),
     `Weibull, weighted log` = H0_weibull(pmax(t, 1e-12), shape_weib_hat, scale_weib_hat)
   ) %>%
   select(
     t,
     `Bernstein H0`,
-    `Log-logistic`,
-    `Weibull, raw SSE`,
+    `Log-logistic, SSE`,
+    `Weibull, SSE`,
     `Weibull, weighted log`
   ) %>%
   pivot_longer(
@@ -397,24 +397,24 @@ ggplot(grid_overlay, aes(x = t, y = H, color = curve, linetype = curve)) +
   scale_color_manual(
     values = c(
       `Bernstein H0` = "black",
-      `Log-logistic` = "steelblue",
-      `Weibull, raw SSE` = "darkred",
+      `Log-logistic, SSE` = "steelblue",
+      `Weibull, SSE` = "darkred",
       `Weibull, weighted log` = "darkgreen"
     )
   ) +
   scale_linetype_manual(
     values = c(
       `Bernstein H0` = "solid",
-      `Log-logistic` = "dashed",
-      `Weibull, raw SSE` = "dotdash",
+      `Log-logistic, SSE` = "dashed",
+      `Weibull, SSE` = "dotdash",
       `Weibull, weighted log` = "twodash"
     )
   ) +
   scale_linewidth_manual(
     values = c(
       `Bernstein H0` = 1.2,
-      `Log-logistic` = 1.0,
-      `Weibull, raw SSE` = 1.0,
+      `Log-logistic, SSE` = 1.0,
+      `Weibull, SSE` = 1.0,
       `Weibull, weighted log` = 1.0
     )
   ) +
@@ -452,15 +452,15 @@ grid_h_overlay <- grid_h %>%
   filter(t > 0) %>%
   mutate(
     `Bernstein h0` = h0,
-    `Log-logistic` = h0_loglogis(t, shape_hat, scale_hat),
-    `Weibull, raw SSE` = h0_weibull(t, shape_weib_plain_hat, scale_weib_plain_hat),
+    `Log-logistic, SSE` = h0_loglogis(t, shape_hat, scale_hat),
+    `Weibull, SSE` = h0_weibull(t, shape_weib_plain_hat, scale_weib_plain_hat),
     `Weibull, weighted log` = h0_weibull(t, shape_weib_hat, scale_weib_hat)
   ) %>%
   select(
     t,
     `Bernstein h0`,
-    `Log-logistic`,
-    `Weibull, raw SSE`,
+    `Log-logistic, SSE`,
+    `Weibull, SSE`,
     `Weibull, weighted log`
   ) %>%
   pivot_longer(
@@ -474,24 +474,24 @@ ggplot(grid_h_overlay, aes(x = t, y = h, color = curve, linetype = curve)) +
   scale_color_manual(
     values = c(
       `Bernstein h0` = "black",
-      `Log-logistic` = "steelblue",
-      `Weibull, raw SSE` = "darkred",
+      `Log-logistic, SSE` = "steelblue",
+      `Weibull, SSE` = "darkred",
       `Weibull, weighted log` = "darkgreen"
     )
   ) +
   scale_linetype_manual(
     values = c(
       `Bernstein h0` = "solid",
-      `Log-logistic` = "dashed",
-      `Weibull, raw SSE` = "dotdash",
+      `Log-logistic, SSE` = "dashed",
+      `Weibull, SSE` = "dotdash",
       `Weibull, weighted log` = "twodash"
     )
   ) +
   scale_linewidth_manual(
     values = c(
       `Bernstein h0` = 1.2,
-      `Log-logistic` = 1.0,
-      `Weibull, raw SSE` = 1.0,
+      `Log-logistic, SSE` = 1.0,
+      `Weibull, SSE` = 1.0,
       `Weibull, weighted log` = 1.0
     )
   ) +
