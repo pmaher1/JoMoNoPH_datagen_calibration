@@ -216,6 +216,14 @@ H0_weibull <- function(t, shape, scale) {
 # Use only positive times (avoid log(0))
 grid_fit <- grid %>% filter(t > 0)
 
+# Starting values from the Weibull log-linear identity
+init_from_lm <- function(dat) {
+  lm_init <- lm(log(H0) ~ log(t), data = dat)
+  shape0  <- max(1e-3, unname(coef(lm_init)[2]))
+  scale0  <- exp(-unname(coef(lm_init)[1]) / shape0)
+  c(shape0 = shape0, scale0 = scale0)
+}
+
 # Objective: minimise squared error between Bernstein H0 and Weibull H0
 obj_weib <- function(par, t, H_target) {
   shape <- exp(par[1])        # enforce positivity
@@ -227,14 +235,10 @@ obj_weib <- function(par, t, H_target) {
   err
 }
 
-# Heuristic starting values:
-# - shape ≈ 1.5 gives a flexible increasing/decreasing hazard
-# - scale ≈ t where H0 = 1, since Weibull H(scale) = 1
-H_one <- 1
-t_one <- grid_fit$t[which.min(abs(grid_fit$H0 - H_one))]
-
-start_shape_weib <- log(1.5)
-start_scale_weib <- log(t_one)
+# Start near the log-linear Weibull fit to avoid boundary solutions.
+init_weib_plain <- init_from_lm(grid_fit)
+start_shape_weib <- log(init_weib_plain["shape0"])
+start_scale_weib <- log(init_weib_plain["scale0"])
 
 # Fit parameters
 fit_par_weib <- optim(
@@ -243,12 +247,12 @@ fit_par_weib <- optim(
   t        = grid_fit$t,
   H_target = grid_fit$H0,
   method   = "L-BFGS-B",
-  lower    = c(log(1e-3), log(min(grid_fit$t) * 1e-3)),
+  lower    = c(log(1e-3), log(min(grid_fit$t))),
   upper    = c(log(50),   log(max(grid_fit$t) * 1e3))
 )
 
-shape_weib_plain_hat <- exp(fit_par_weib$par[1])
-scale_weib_plain_hat <- exp(fit_par_weib$par[2])
+shape_weib_plain_hat <- unname(exp(fit_par_weib$par[1]))
+scale_weib_plain_hat <- unname(exp(fit_par_weib$par[2]))
 
 shape_weib_plain_hat
 scale_weib_plain_hat
@@ -280,14 +284,6 @@ if (exists("p_tail")) rm(p_tail)
 
 # Use only positive times and strictly positive hazards
 grid_fit <- grid %>% dplyr::filter(t > 0, H0 > 0) %>% dplyr::arrange(t)
-
-# ---- Starting values from Weibull log-linear identity ----
-init_from_lm <- function(dat) {
-  lm_init <- lm(log(H0) ~ log(t), data = dat)
-  shape0  <- max(1e-3, unname(coef(lm_init)[2]))
-  scale0  <- exp(-unname(coef(lm_init)[1]) / shape0)
-  c(shape0 = shape0, scale0 = scale0)
-}
 
 # ---- Tail-mass rule to pick p_tail ----
 # Choose p_tail so that:
