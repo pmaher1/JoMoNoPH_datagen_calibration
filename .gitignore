@@ -1,0 +1,7 @@
+*.pper
+*.json
+*.rds
+/.Rproj.user
+*.jpg
+*.pdf
+.Rhistory
