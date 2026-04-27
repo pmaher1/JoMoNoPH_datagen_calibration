@@ -4,11 +4,11 @@ library(tidyverse)
 # 1. Extract posterior summary statistics from Stan fit
 # ============================================================
 
-# previous inappropriate version using b2 = exp(b2); B2 = exp(B2) .* tau_aft;
-# BP_objects <- readRDS("~/Documents/github/JoMoNoPH_datagen_calibration/BP_objects.rds")
+# Previous inappropriate version using b2 = exp(b2); B2 = exp(B2) .* tau_aft;
+BP_objects <- readRDS("~/Documents/github/JoMoNoPH_datagen_calibration/BP_objects.rds")
 
-# # current amended version using b2 = exp(b2) ./ tau_aft; B2 = exp(B2);
-BP_objects <- readRDS("~/Documents/github/JoMoNoPH_datagen_calibration/BP_objects_DM.rds")
+# Current amended version using b2 = exp(b2) ./ tau_aft; B2 = exp(B2);
+# BP_objects <- readRDS("~/Documents/github/JoMoNoPH_datagen_calibration/BP_objects_DM.rds")
 
 # Pull only the parameters needed for baseline hazard + RE
 sum_re <- BP_objects$fit$summary(
@@ -89,12 +89,12 @@ grid <- tibble(
     u  = pmin(pmax(t / tau, 1e-6), 1 - 1e-6),
     # Each row is a vector of Bernstein basis CDF values
     B  = map(u, ~ bernstein_cdf(.x, m)),
-    # Baseline cumulative hazard under the amended DM scaling:
-    # H0(t) = Σ γ_k F_k(u), where u = t / τ
-    H0 = map_dbl(B, ~ sum(gamma * .x))
-    # Old scaling for BP_objects.rds:
-    # H0(t) = τ Σ γ_k F_k(u)
-    # H0 = map_dbl(B, ~ tau * sum(gamma * .x))
+    # Baseline cumulative hazard under the old BP_objects.rds scaling:
+    # H0(t) = τ Σ γ_k F_k(u), where u = t / τ
+    H0 = map_dbl(B, ~ tau * sum(gamma * .x))
+    # Amended DM scaling for BP_objects_DM.rds:
+    # H0(t) = Σ γ_k F_k(u)
+    # H0 = map_dbl(B, ~ sum(gamma * .x))
   )
 
 # ---- Plot: Bernstein cumulative baseline hazard ----
@@ -119,11 +119,12 @@ grid_h <- tibble(
   mutate(
     u  = pmin(pmax(t / tau, 1e-6), 1 - 1e-6),
     f  = map(u, ~ bernstein_pdf(.x, m)),
-    # Instantaneous hazard: h0(t) = dH0(t)/dt = (1 / τ) Σ γ_k f_k(u)
-    h0 = map_dbl(f, ~ sum(gamma * .x) / tau)
-    # Old scaling for BP_objects.rds:
-    # h0(t) = Σ γ_k f_k(u)
-    # h0 = map_dbl(f, ~ sum(gamma * .x))
+    # Instantaneous hazard under the old BP_objects.rds scaling:
+    # h0(t) = dH0(t)/dt = Σ γ_k f_k(u)
+    h0 = map_dbl(f, ~ sum(gamma * .x))
+    # Amended DM scaling for BP_objects_DM.rds:
+    # h0(t) = (1 / τ) Σ γ_k f_k(u)
+    # h0 = map_dbl(f, ~ sum(gamma * .x) / tau)
   )
 
 # ---- Plot: Bernstein baseline hazard ----
@@ -374,8 +375,8 @@ grid_overlay <- grid %>%
     `Log-logistic, SSE` = H0_loglogis(t, shape_hat, scale_hat),
     `Weibull, SSE` = H0_weibull(t, shape_weib_plain_hat, scale_weib_plain_hat),
     `Weibull, weighted log` = H0_weibull(pmax(t, 1e-12), shape_weib_hat, scale_weib_hat),
-    `Log-logistic (1.2, 23)` = H0_loglogis(t, shape = 1.2, scale = 23),
-    `Weibull (0.7, 38)` = H0_weibull(t, shape = 0.7, scale = 38)
+    `Log-logistic (1.75, 12)` = H0_loglogis(t, shape = 1.75, scale = 12),
+    `Weibull (0.692, 13.823)` = H0_weibull(t, shape = 0.692, scale = 13.823)
   ) %>%
   select(
     t,
@@ -383,8 +384,8 @@ grid_overlay <- grid %>%
     `Log-logistic, SSE`,
     `Weibull, SSE`,
     `Weibull, weighted log`,
-    `Log-logistic (1.2, 23)`,
-    `Weibull (0.7, 38)`
+    `Log-logistic (1.75, 12)`,
+    `Weibull (0.692, 13.823)`
   ) %>%
   pivot_longer(
     cols = -t,
@@ -400,8 +401,8 @@ ggplot(grid_overlay, aes(x = t, y = H, color = curve, linetype = curve)) +
       `Log-logistic, SSE` = "steelblue",
       `Weibull, SSE` = "darkred",
       `Weibull, weighted log` = "darkgreen",
-      `Log-logistic (1.2, 23)` = "skyblue3",
-      `Weibull (0.7, 38)` = "orange3"
+      `Log-logistic (1.75, 12)` = "skyblue3",
+      `Weibull (0.692, 13.823)` = "orange3"
     )
   ) +
   scale_linetype_manual(
@@ -410,8 +411,8 @@ ggplot(grid_overlay, aes(x = t, y = H, color = curve, linetype = curve)) +
       `Log-logistic, SSE` = "dashed",
       `Weibull, SSE` = "dotdash",
       `Weibull, weighted log` = "twodash",
-      `Log-logistic (1.2, 23)` = "dotted",
-      `Weibull (0.7, 38)` = "dotted"
+      `Log-logistic (1.75, 12)` = "dotted",
+      `Weibull (0.692, 13.823)` = "dotted"
     )
   ) +
   scale_linewidth_manual(
@@ -420,8 +421,8 @@ ggplot(grid_overlay, aes(x = t, y = H, color = curve, linetype = curve)) +
       `Log-logistic, SSE` = 1.0,
       `Weibull, SSE` = 1.0,
       `Weibull, weighted log` = 1.0,
-      `Log-logistic (1.2, 23)` = 0.9,
-      `Weibull (0.7, 38)` = 0.9
+      `Log-logistic (1.75, 12)` = 0.9,
+      `Weibull (0.692, 13.823)` = 0.9
     )
   ) +
   labs(
@@ -461,8 +462,8 @@ grid_h_overlay <- grid_h %>%
     `Log-logistic, SSE` = h0_loglogis(t, shape_hat, scale_hat),
     `Weibull, SSE` = h0_weibull(t, shape_weib_plain_hat, scale_weib_plain_hat),
     `Weibull, weighted log` = h0_weibull(t, shape_weib_hat, scale_weib_hat),
-    `Log-logistic (1.2, 23)` = h0_loglogis(t, shape = 1.2, scale = 23),
-    `Weibull (0.7, 38)` = h0_weibull(t, shape = 0.7, scale = 38)
+    `Log-logistic (1.75, 12)` = h0_loglogis(t, shape = 1.75, scale = 12),
+    `Weibull (0.692, 13.823)` = h0_weibull(t, shape = 0.692, scale = 13.823)
   ) %>%
   select(
     t,
@@ -470,8 +471,8 @@ grid_h_overlay <- grid_h %>%
     `Log-logistic, SSE`,
     `Weibull, SSE`,
     `Weibull, weighted log`,
-    `Log-logistic (1.2, 23)`,
-    `Weibull (0.7, 38)`
+    `Log-logistic (1.75, 12)`,
+    `Weibull (0.692, 13.823)`
   ) %>%
   pivot_longer(
     cols = -t,
@@ -487,8 +488,8 @@ ggplot(grid_h_overlay, aes(x = t, y = h, color = curve, linetype = curve)) +
       `Log-logistic, SSE` = "steelblue",
       `Weibull, SSE` = "darkred",
       `Weibull, weighted log` = "darkgreen",
-      `Log-logistic (1.2, 23)` = "skyblue3",
-      `Weibull (0.7, 38)` = "orange3"
+      `Log-logistic (1.75, 12)` = "skyblue3",
+      `Weibull (0.692, 13.823)` = "orange3"
     )
   ) +
   scale_linetype_manual(
@@ -497,8 +498,8 @@ ggplot(grid_h_overlay, aes(x = t, y = h, color = curve, linetype = curve)) +
       `Log-logistic, SSE` = "dashed",
       `Weibull, SSE` = "dotdash",
       `Weibull, weighted log` = "twodash",
-      `Log-logistic (1.2, 23)` = "dotted",
-      `Weibull (0.7, 38)` = "dotted"
+      `Log-logistic (1.75, 12)` = "dotted",
+      `Weibull (0.692, 13.823)` = "dotted"
     )
   ) +
   scale_linewidth_manual(
@@ -507,8 +508,8 @@ ggplot(grid_h_overlay, aes(x = t, y = h, color = curve, linetype = curve)) +
       `Log-logistic, SSE` = 1.0,
       `Weibull, SSE` = 1.0,
       `Weibull, weighted log` = 1.0,
-      `Log-logistic (1.2, 23)` = 0.9,
-      `Weibull (0.7, 38)` = 0.9
+      `Log-logistic (1.75, 12)` = 0.9,
+      `Weibull (0.692, 13.823)` = 0.9
     )
   ) +
   labs(
