@@ -6,3 +6,4 @@
 *.pdf
 .Rhistory
 save.R
+*.png
