@@ -53,6 +53,7 @@ gamma <- sum_re %>%
   pull(mean)
 
 m <- length(gamma)   # number of Bernstein basis terms = degree
+basis_labels <- paste0("gamma[", seq_along(gamma), "]")
 
 
 # Max observed event time (defines Bernstein domain scaling)
@@ -98,16 +99,37 @@ grid <- tibble(
     # H0 = map_dbl(B, ~ tau * sum(gamma * .x))
   )
 
+grid_H0_components <- grid %>%
+  transmute(
+    t,
+    component = map(
+      B,
+      ~ tibble(
+        basis = factor(basis_labels, levels = basis_labels),
+        H = gamma * .x
+      )
+    )
+  ) %>%
+  unnest(component)
+
 # ---- Plot: Bernstein cumulative baseline hazard ----
-ggplot(grid, aes(t, H0)) +
-  geom_line(size = 1.2, color = "steelblue") +
+ggplot() +
+  geom_line(
+    data = grid_H0_components,
+    aes(x = t, y = H, color = basis),
+    linewidth = 0.7,
+    alpha = 0.75
+  ) +
+  geom_line(data = grid, aes(x = t, y = H0), linewidth = 1.2, color = "black") +
   labs(
     x = "Time",
     y = "Cumulative baseline hazard H0(t)",
+    color = "Weighted basis",
     title = "Estimated Bernstein Cumulative Baseline Hazard",
     subtitle = paste0("t ∈ [0, ", round(t_max, 1), "]")
   ) +
-  theme_minimal(base_size = 14)
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom")
 
 
 # ============================================================
@@ -127,15 +149,36 @@ grid_h <- tibble(
     # h0 = map_dbl(f, ~ sum(gamma * .x))
   )
 
+grid_h_components <- grid_h %>%
+  transmute(
+    t,
+    component = map(
+      f,
+      ~ tibble(
+        basis = factor(basis_labels, levels = basis_labels),
+        h = gamma * .x / tau
+      )
+    )
+  ) %>%
+  unnest(component)
+
 # ---- Plot: Bernstein baseline hazard ----
-ggplot(grid_h, aes(t, h0)) +
-  geom_line(size = 1.2, color = "firebrick") +
+ggplot() +
+  geom_line(
+    data = grid_h_components,
+    aes(x = t, y = h, color = basis),
+    linewidth = 0.7,
+    alpha = 0.75
+  ) +
+  geom_line(data = grid_h, aes(x = t, y = h0), linewidth = 1.2, color = "black") +
   labs(
     x = "Time",
     y = "Baseline hazard h0(t)",
+    color = "Weighted basis",
     title = "Estimated Bernstein Instantaneous Baseline Hazard"
   ) +
-  theme_minimal(base_size = 14)
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom")
 
 
 # ============================================================
