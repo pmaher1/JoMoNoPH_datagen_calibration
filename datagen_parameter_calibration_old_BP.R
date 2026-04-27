@@ -1,14 +1,15 @@
 library(tidyverse)
+library(here)
 
 # ============================================================
 # 1. Extract posterior summary statistics from Stan fit
 # ============================================================
 
 # Previous inappropriate version using b2 = exp(b2); B2 = exp(B2) .* tau_aft;
-BP_objects <- readRDS("~/Documents/github/JoMoNoPH_datagen_calibration/BP_objects.rds")
+BP_objects <- readRDS(here("BP_objects.rds"))
 
 # Current amended version using b2 = exp(b2) ./ tau_aft; B2 = exp(B2);
-# BP_objects <- readRDS("~/Documents/github/JoMoNoPH_datagen_calibration/BP_objects_DM.rds")
+# BP_objects <- readRDS(here("BP_objects_DM.rds"))
 
 # Pull only the parameters needed for baseline hazard + RE
 sum_re <- BP_objects$fit$summary(
